@@ -62,12 +62,6 @@ objects:
       tags:
       - from:
           kind: DockerImage
-          name: docker.elastic.co/elasticsearch/elasticsearch-oss:latest
-        name: latest
-        importPolicy:
-          scheduled: true
-      - from:
-          kind: DockerImage
           name: docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.2
         name: 6.3.2
 - apiVersion: v1
@@ -81,12 +75,6 @@ objects:
       app: kibana
   spec:
       tags:
-      - from:
-          kind: DockerImage
-          name: docker.elastic.co/kibana/kibana-oss:latest
-        name: latest
-        importPolicy:
-          scheduled: true
       - from:
           kind: DockerImage
           name: docker.elastic.co/kibana/kibana-oss:6.3.2
