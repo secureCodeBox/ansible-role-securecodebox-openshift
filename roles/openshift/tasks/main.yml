@@ -114,6 +114,31 @@
 
 
 #############################################################################################
+#                  Delte Pods and templates to replace them later                           #
+#    Only applicable in prod mode. In dev the project is new and these objects dont exist   #
+#############################################################################################
+
+- name: Delete DeploymentConfigs
+  shell: |
+    {{oc_path_with_bin}} delete deploymentconfigs -l name=scb
+  when: development == false
+
+- name: Delete Templates
+  shell: |
+    {{oc_path_with_bin}} delete templates -l name=scb
+  when: development == false
+
+- name: Delete Routes
+  shell: |
+    {{oc_path_with_bin}} delete routes -l name=scb
+  when: development == false
+
+  - name: Delete Services
+  shell: |
+    {{oc_path_with_bin}} delete services -l name=scb
+  when: development == false
+
+#############################################################################################
 #                  Configure and Deploy the secureCodeBox-Target                            #
 #############################################################################################
 
