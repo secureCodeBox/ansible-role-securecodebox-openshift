@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Template
 metadata:
   name: securecodebox-engine
+  labels:
+      name: scb
+      stack: engine
   annotations:
     description: "This is the main component of the secureCodeBox it's a Camunda BPMN engine, which allows the engineer to build the whole scan process as a BPMN model."
     iconClass: "icon-codeigniter"

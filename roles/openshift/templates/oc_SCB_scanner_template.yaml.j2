@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Template
 metadata:
   name: securecodebox-scanner
+  labels:
+      name: scb
+      stack: scanner
   annotations:
     description: "Scanner are the actual worker bees of the secuerCodeBox. This template contains all of them."
     iconClass: "icon-codeigniter"
