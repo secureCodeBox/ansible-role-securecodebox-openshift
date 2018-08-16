@@ -1,0 +1,339 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: securecodebox-targets
+  annotations:
+    description: "Contains vulnerable applications for target practice."
+    iconClass: "icon-codeigniter"
+    tags: "target,secureCodeBox"
+    openshift.io/provider-display-name: "iteratec GmbH"
+    openshift.io/documentation-url: "https://docs.secureCodeBox.io"
+    openshift.io/support-url: "https://support.secureCodeBox.io"
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: bodgeit
+    labels:
+      name: scb
+      stack: targets
+      app: bodgeit
+      branch: ${DOCKER_LABEL}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      deploymentconfig: bodgeit
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: juice-shop
+    labels:
+      name: scb
+      stack: targets
+      app: juice-shop
+      branch: ${DOCKER_LABEL}
+  spec:
+    ports:
+    - name: 3000-tcp
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      deploymentconfig: juice-shop
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: bodgeit
+    namespace: {{ oc_project_id }}
+    labels:
+      name: scb
+      stack: targets
+      app: bodgeit
+  spec:
+      dockerImageRepository: ${DOCKER_REPOSITORY_URL}
+      tags:
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/bodgeit:develop
+        name: develop
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/bodgeit:master
+        name: master
+        importPolicy:
+          scheduled: true
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: juice-shop
+    namespace: {{ oc_project_id }}
+    labels:
+      name: scb
+      stack: targets
+      app: juice-shop
+  spec:
+      dockerImageRepository: ${DOCKER_REPOSITORY_URL}
+      tags:
+      - from:
+          kind: DockerImage
+          name: bkimminich/juice-shop
+        name: latest
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: bkimminich/juice-shop:v7.4.1
+        name: v7.4.1
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: bodgeit
+    labels:
+      name: scb
+      stack: targets
+      app: bodgeit
+      branch: ${DOCKER_LABEL}
+  spec:
+    replicas: 1
+    selector:
+      app: bodgeit
+      deploymentconfig: bodgeit
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: bodgeit
+          deploymentconfig: bodgeit
+      spec:
+        containers:
+        - env:
+          - name: SERVICE_NAME
+            value: bodgeit
+          - name: SERVICE_TAGS
+            value: webapp,www,test,ui,target,loadbalanced,sso
+          name: bodgeit
+          image: ${DOCKER_REPOSITORY_URL}/bodgeit:${DOCKER_LABEL}
+          imagePullPolicy: ${DOCKER_PULL}
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /bodgeit
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /bodgeit
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 512M
+            requests:
+              memory: 256M
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - bodgeit
+        from:
+          kind: ImageStreamTag
+          name: bodgeit:${DOCKER_LABEL}
+          namespace: {{ oc_project_id }}
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: juice-shop
+    labels:
+      name: scb
+      stack: targets
+      app: juice-shop
+      branch: ${DOCKER_LABEL}
+  spec:
+    replicas: 1
+    selector:
+      app: juice-shop
+      deploymentconfig: juice-shop
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: juice-shop
+          deploymentconfig: juice-shop
+      spec:
+        containers:
+        - env:
+          - name: SERVICE_NAME
+            value: juice-shop
+          - name: SERVICE_TAGS
+            value: webapp,www,test,ui,target,loadbalanced,sso
+          name: juice-shop
+          image: bkimminich/juice-shop
+          imagePullPolicy: ${DOCKER_PULL}
+          ports:
+          - containerPort: 3000
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 512M
+            requests:
+              memory: 256M
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - juice-shop
+        from:
+          kind: ImageStreamTag
+          name: juice-shop:latest
+          namespace: {{ oc_project_id }}
+      type: ImageChange
+- apiVersion: v1
+  kind: Route
+  metadata:
+{% if oc_enable_ip_whitelisting %}
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: {{oc_ip_whitelist}}
+{% endif %}
+    name: bodgeit
+    labels:
+      name: scb
+      stack: targets
+      app: bodgeit
+      branch: ${DOCKER_LABEL}
+  spec:
+    host: bodgeit-scb.{{ oc_route_base_url }}
+    port:
+      targetPort: 8080-tcp
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: bodgeit
+      weight: 100
+    wildcardPolicy: None
+- apiVersion: v1
+  kind: Route
+  metadata:
+{% if oc_enable_ip_whitelisting %}
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: {{oc_ip_whitelist}}
+{% endif %}
+    name: juice-shop
+    labels:
+      name: scb
+      stack: targets
+      app: juice-shop
+      branch: ${DOCKER_LABEL}
+  spec:
+    host: juice-shop-scb.{{ oc_route_base_url }}
+    port:
+      targetPort: 3000-tcp
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: juice-shop
+      weight: 100
+    wildcardPolicy: None
+parameters:
+  - name: DOCKER_REPOSITORY_URL
+    displayName: Docker Repository URL
+    description: The docker registry responsible for hosting the secureCodeBox images (e.g. dockerHub - default, artifactory, ...).
+    value: securecodebox
+    required: true
+  - name: DOCKER_LABEL
+    displayName: Container Tag/Version/Label
+    description: The container version describes the corresponding environment (e.g. develop, master, demo).
+    value: develop
+    required: true
+  - name: DOCKER_PULL
+    displayName: Pull Image Strategy
+    description: "Always: pull image before creating container. IfNotPresent: only once if not present."
+    value: Always
+    required: true
+  - name: REPLICA_COUNT
+    description: Number of replicas to run.
+    value: "2"
+    required: true
+message: "... Great! your secureCodeBox Project is active now ..."

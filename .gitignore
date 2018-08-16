@@ -1,0 +1,5 @@
+.idea/
+site.retry
+.DS_Store
+roles/openshift/defaults/main.yml
+roles/openshift/files/.dockercfg

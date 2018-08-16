@@ -1,0 +1,342 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: securecodebox-persistence
+  annotations:
+    description: "Providing persistent storage for the secureCodeBox. Comes out of the box with elasticsearch and kibana."
+    iconClass: "icon-codeigniter"
+    tags: "target,secureCodeBox"
+    openshift.io/provider-display-name: "iteratec GmbH"
+    openshift.io/documentation-url: "https://docs.secureCodeBox.io"
+    openshift.io/support-url: "https://support.secureCodeBox.io"
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: elasticsearch
+    labels:
+      name: scb
+      stack: persistence
+      app: elasticsearch
+  spec:
+    ports:
+    - name: 9200-tcp
+      port: 9200
+      protocol: TCP
+      targetPort: 9200
+    selector:
+      deploymentconfig: elasticsearch
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: kibana
+    labels:
+      name: scb
+      stack: persistence
+      app: kibana
+  spec:
+    ports:
+    - name: 5601-tcp
+      port: 5601
+      protocol: TCP
+      targetPort: 5601
+    selector:
+      deploymentconfig: kibana
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: elasticsearch
+    namespace: {{ oc_project_id }}
+    labels:
+      name: scb
+      stack: persistence
+      app: elasticsearch
+  spec:
+      tags:
+      - from:
+          kind: DockerImage
+          name: docker.elastic.co/elasticsearch/elasticsearch-oss:latest
+        name: latest
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.2
+        name: 6.3.2
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: kibana
+    namespace: {{ oc_project_id }}
+    labels:
+      name: scb
+      stack: persistence
+      app: kibana
+  spec:
+      tags:
+      - from:
+          kind: DockerImage
+          name: docker.elastic.co/kibana/kibana-oss:latest
+        name: latest
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: docker.elastic.co/kibana/kibana-oss:6.3.2
+        name: 6.3.2
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: elasticsearch
+    labels:
+      name: scb
+      stack: persistence
+      app: elasticsearch
+  spec:
+    replicas: 1
+    selector:
+      app: elasticsearch
+      deploymentconfig: elasticsearch
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 1200
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: elasticsearch
+          deploymentconfig: elasticsearch
+      spec:
+        containers:
+        - env:
+          - name: SERVICE_NAME
+            value: elasticsearch
+          - name: SERVICE_TAGS
+            value: webapp,www,test,ui,target,loadbalanced,sso
+          name: elasticsearch
+          image: elasticsearch/elasticsearch-oss:6.3.2
+          imagePullPolicy: ${DOCKER_PULL}
+          ports:
+          - containerPort: 9200
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 9200
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 9200
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          resources:
+            limits:
+              memory: 2048M
+            requests:
+              memory: 512M
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+{% if oc_persistence_enabled %}
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: volume-elasticsearch-master
+{% endif %}
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+{% if oc_persistence_enabled %}
+        volumes:
+        - name: volume-elasticsearch-master
+          persistentVolumeClaim:
+            claimName: elasticsearch-master
+{% endif %}
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - elasticsearch
+        from:
+          kind: ImageStreamTag
+          name: elasticsearch:6.3.2
+          namespace: {{ oc_project_id }}
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: kibana
+    labels:
+      name: scb
+      stack: persistence
+      app: kibana
+  spec:
+    replicas: 1
+    selector:
+      app: kibana
+      deploymentconfig: kibana
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 1200
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: kibana
+          deploymentconfig: kibana
+      spec:
+        containers:
+        - env:
+          - name: SERVICE_NAME
+            value: kibana
+          - name: SERVICE_TAGS
+            value: webapp,www,test,ui,target,loadbalanced,sso
+          name: kibana
+          image: kibana/kibana-oss:6.3.2
+          imagePullPolicy: ${DOCKER_PULL}
+          ports:
+          - containerPort: 5601
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 5601
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 5601
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          resources:
+            limits:
+              memory: 1024M
+            requests:
+              memory: 512M
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - kibana
+        from:
+          kind: ImageStreamTag
+          name: kibana:6.3.2
+          namespace: {{ oc_project_id }}
+      type: ImageChange
+- apiVersion: v1
+  kind: Route
+  metadata:
+{% if oc_enable_ip_whitelisting %}
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: {{oc_ip_whitelist}}
+{% endif %}
+    name: elasticsearch
+    labels:
+      name: scb
+      stack: persistence
+      app: elasticsearch
+  spec:
+    host: elasticsearch-scb.{{ oc_route_base_url }}
+    port:
+      targetPort: 9200-tcp
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: elasticsearch
+      weight: 100
+    wildcardPolicy: None
+- apiVersion: v1
+  kind: Route
+  metadata:
+{% if oc_enable_ip_whitelisting %}
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: {{oc_ip_whitelist}}
+{% endif %}
+    name: kibana
+    labels:
+      name: scb
+      stack: persistence
+      app: kibana
+  spec:
+    host: kibana-scb.{{ oc_route_base_url }}
+    port:
+      targetPort: 5601-tcp
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: kibana
+      weight: 100
+    wildcardPolicy: None
+{% if oc_persistence_enabled %}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: elasticsearch-master
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 4Gi
+{% if oc_create_volumes == false %}
+    volumeName: {{oc_elasticsearch_master_volume_name}}
+{% endif %}
+{% endif %}
+
+parameters:
+  - name: DOCKER_PULL
+    displayName: Pull Image Strategy
+    description: "Always: pull image before creating container. IfNotPresent: only once if not present."
+    value: Always
+    required: true
+message: "... Great! your secureCodeBox Project is active now ..."

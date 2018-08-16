@@ -1,0 +1,401 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: securecodebox-engine
+  annotations:
+    description: "This is the main component of the secureCodeBox it's a Camunda BPMN engine, which allows the engineer to build the whole scan process as a BPMN model."
+    iconClass: "icon-codeigniter"
+    tags: "target,secureCodeBox"
+    openshift.io/provider-display-name: "iteratec GmbH"
+    openshift.io/documentation-url: "https://docs.secureCodeBox.io"
+    openshift.io/support-url: "https://support.secureCodeBox.io"
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: engine-${DOCKER_LABEL}
+    labels:
+      name: scb
+      stack: engine
+      app: engine
+      branch: ${DOCKER_LABEL}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      deploymentconfig: engine-${DOCKER_LABEL}
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: mysql
+    labels:
+      name: scb
+      stack: engine
+      app: mysql
+  spec:
+    ports:
+    - name: 3306-tcp
+      port: 3306
+      protocol: TCP
+      targetPort: 3306
+    selector:
+      deploymentconfig: mysql
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: engine
+    namespace: {{ oc_project_id }}
+    labels:
+      name: scb
+      stack: engine
+      app: engine
+  spec:
+      dockerImageRepository: ${DOCKER_REPOSITORY_URL}
+      tags:
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/engine:latest
+        name: latest
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/engine:oss
+        name: oss
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/engine:develop
+        name: develop
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/engine:master
+        name: master
+        importPolicy:
+          scheduled: true
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: engine-${DOCKER_LABEL}
+    labels:
+      name: scb
+      stack: engine
+      app: engine
+      branch: ${DOCKER_LABEL}
+  spec:
+    replicas: 1
+    selector:
+      app: engine
+      deploymentconfig: engine-${DOCKER_LABEL}
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 1200
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: engine
+          deploymentconfig: engine-${DOCKER_LABEL}
+      spec:
+        containers:
+        - env:
+          - name: SERVICE_NAME
+            value: engine
+          - name: SERVICE_TAGS
+            value: webapp,www,test,ui,target,loadbalanced,sso
+          - name: SERVICE_NAME
+            value: engine
+          - name: CAMUNDA_BPM_DATABASE_TYPE
+            value: mysql
+          - name: SPRING_DATASOURCE_URL
+            value: jdbc:mysql://mysql.{{ oc_project_id }}.svc:3306/camundadb
+          - name: SPRING_DATASOURCE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: mysql
+          - name: SPRING_DATASOURCE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: mysql
+          - name: SECURECODEBOX_PERSISTENCE_PROVIDER
+            value: ${PERSISTENCE_PROVIDER}
+          - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_HOST
+            value: ${ELASTIC_SEARCH_HOST}
+          - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_PORT
+            value: ${ELASTIC_SEARCH_PORT}
+          - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_INDEX_PREFIX
+            value: securecodebox
+          - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_INDEX_DELETE_ON_INIT
+            value: "false"
+          - name: SECURECODEBOX_DEFAULT_TARGET_URI
+            value: "http://bodgeit.{{ oc_project_id }}.svc:8080/bodgeit"
+          - name: SECURECODEBOX_DEFAULT_TARGET_LOCATION
+            value: "bodgeit.{{ oc_project_id }}.svc"
+          - name: SECURECODEBOX_DEFAULT_TARGET_NAME
+            value: "BodgeIT on OpenShift"
+          - name: SECURECODEBOX_DEFAULT_CONTEXT
+            value: "Test-Project"
+          name: engine-${DOCKER_LABEL}
+          image: ${DOCKER_REPOSITORY_URL}/engine:develop
+          imagePullPolicy: ${DOCKER_PULL}
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          resources:
+            limits:
+              memory: 2048M
+            requests:
+              memory: 512M
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - engine-${DOCKER_LABEL}
+        from:
+          kind: ImageStreamTag
+          name: engine:${DOCKER_LABEL}
+          namespace: {{ oc_project_id }}
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: mysql
+    labels:
+      name: scb
+      stack: engine
+      app: mysql
+  spec:
+    replicas: 1
+    selector:
+      app: mysql
+      deploymentconfig: mysql
+    strategy:
+      activeDeadlineSeconds: 21600
+      recreateParams:
+        timeoutSeconds: 600
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: mysql
+          deploymentconfig: mysql
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: mysql
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: mysql
+          - name: MYSQL_DATABASE
+            value: camundadb
+          name: mysql
+          image: openshift/mysql:5.7
+          imagePullPolicy: ${DOCKER_PULL}
+          ports:
+          - containerPort: 3306
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3306
+            timeoutSeconds: 1
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - '-i'
+                - '-c'
+                - >-
+                  MYSQL_PWD="$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u $MYSQL_USER
+                  -D $MYSQL_DATABASE -e 'SELECT 1'
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/lib/mysql/data
+              name: volume-camundadb-mysql
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+{% if oc_persistence_enabled %}
+        volumes:
+        - name: volume-camundadb-mysql
+          persistentVolumeClaim:
+            claimName: camundadb-mysql
+{% else %}
+        volumes:
+          - emptyDir: {}
+            name: volume-camundadb-mysql
+{% endif %}
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - mysql
+        from:
+          kind: ImageStreamTag
+          name: 'mysql:5.7'
+          namespace: openshift
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: Route
+  metadata:
+{% if oc_enable_ip_whitelisting %}
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: {{oc_ip_whitelist}}
+{% endif %}
+    name: engine-${DOCKER_LABEL}
+    labels:
+      name: scb
+      stack: engine
+      app: engine
+      branch: ${DOCKER_LABEL}
+  spec:
+    host: engine-${DOCKER_LABEL}-scb.{{ oc_route_base_url }}
+    port:
+      targetPort: 8080-tcp
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: engine-${DOCKER_LABEL}
+      weight: 100
+    wildcardPolicy: None
+- apiVersion: v1
+  kind: Secret
+  type: Opaque 
+  stringData: 
+    database-user: ${MYSQL_USER}
+    database-password: ${MYSQL_PASSWORD}
+  metadata:
+    name: mysql
+    namespace: {{ oc_project_id }}
+    annotations:
+      template.openshift.io/expose-password: '{.data[''database-password'']}'
+      template.openshift.io/expose-username: '{.data[''database-user'']}'
+{% if oc_persistence_enabled %}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: camundadb-mysql
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 2Gi
+{% if oc_create_volumes == false %}
+    volumeName: {{oc_camunda_mysql_volume_name}}
+{% endif %}
+{% endif %}
+parameters:
+  - name: DOCKER_REPOSITORY_URL
+    displayName: Docker Repository URL
+    description: The docker registry responsible for hosting the secureCodeBox images (e.g. dockerHub - default, artifactory, ...).
+    value: securecodebox
+    required: true
+  - name: DOCKER_LABEL
+    displayName: Container Tag/Version/Label
+    description: The container version describes the corresponding environment (e.g. develop, master, demo).
+    value: develop
+    required: true
+  - name: DOCKER_PULL
+    displayName: Pull Image Strategy
+    description: "Always: pull image before creating container. IfNotPresent: only once if not present."
+    value: Always
+    required: true
+  - name: REPLICA_COUNT
+    description: Number of replicas to run.
+    value: "2"
+    required: true
+  - name: PERSISTENCE_PROVIDER
+    description: Persistence Provider the engine should use. (none|elasticsearch)
+    value: "2"
+    required: true
+  - name: ELASTIC_SEARCH_HOST
+    description: OpenShift Internal Address of the ElasticSearch Instance
+    value: "elasticsearch.secure-code-box.svc"
+    required: true
+  - name: ELASTIC_SEARCH_PORT
+    description: Internal Port of the ElasticSearch Instance
+    value: "9200"
+    required: true
+  - name: MYSQL_USER
+    description: Username for the MySQL user
+    value: "camundadb_user"
+    required: true
+  - name: MYSQL_PASSWORD
+    description: Password for the MySQL user
+    generate: expression 
+    from: "[a-zA-Z0-9]{40}"
+  
+message: "... Great! your secureCodeBox Project is active now ..."

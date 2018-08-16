@@ -1,0 +1,211 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: securecodebox-scanner
+  annotations:
+    description: "Scanner are the actual worker bees of the secuerCodeBox. This template contains all of them."
+    iconClass: "icon-codeigniter"
+    tags: "target,secureCodeBox"
+    openshift.io/provider-display-name: "iteratec GmbH"
+    openshift.io/documentation-url: "https://docs.secureCodeBox.io"
+    openshift.io/support-url: "https://support.secureCodeBox.io"
+objects:
+{% for scanner in oc_scanner %}
+### Service
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: {{scanner.name}}-${DOCKER_LABEL}
+    labels:
+      name: scb
+      stack: scanner
+      app: {{scanner.name}}
+      branch: ${DOCKER_LABEL}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      deploymentconfig: {{scanner.name}}-${DOCKER_LABEL}
+    sessionAffinity: None
+    type: ClusterIP
+
+### ImageStream
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: {{scanner.name}}
+    namespace: {{ oc_project_id }}
+    labels:
+      name: scb
+      stack: scanner
+      app: {{scanner.name}}
+  spec:
+      dockerImageRepository: ${DOCKER_REPOSITORY_URL}
+      tags:
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/{{scanner.name}}:latest
+        name: latest
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/{{scanner.name}}:oss
+        name: oss
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/{{scanner.name}}:develop
+        name: develop
+        importPolicy:
+          scheduled: true
+      - from:
+          kind: DockerImage
+          name: ${DOCKER_REPOSITORY_URL}/{{scanner.name}}:master
+        name: master
+        importPolicy:
+          scheduled: true
+
+### DeploymentConfig
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: {{scanner.name}}-${DOCKER_LABEL}
+    labels:
+      name: scb
+      stack: scanner
+      app: {{scanner.name}}
+      branch: ${DOCKER_LABEL}
+  spec:
+    replicas: {{scanner.replicas}}
+    selector:
+      app: {{scanner.name}}
+      deploymentconfig: {{scanner.name}}-${DOCKER_LABEL}
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: {{scanner.name}}
+          deploymentconfig: {{scanner.name}}-${DOCKER_LABEL}
+      spec:
+        containers:
+        - env:
+          - name: SERVICE_NAME
+            value: {{scanner.name}}
+          - name: SERVICE_TAGS
+            value: webapp,www,test,ui,target,loadbalanced,sso
+          - name: ENGINE_ADDRESS
+            value: http://engine-${DOCKER_LABEL}.{{ oc_project_id }}.svc:8080
+          name: {{scanner.name}}-${DOCKER_LABEL}
+          image: ${DOCKER_REPOSITORY_URL}/{{scanner.name}}:develop
+          imagePullPolicy: ${DOCKER_PULL}
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: {{scanner.healthcheck.path}}
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: {{scanner.healthcheck.initialDelaySeconds}}
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: {{scanner.healthcheck.path}}
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: {{scanner.healthcheck.initialDelaySeconds}}
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: {{scanner.resources.limits.memory}}
+            requests:
+              memory: {{scanner.resources.requests.memory}}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - {{scanner.name}}-${DOCKER_LABEL}
+        from:
+          kind: ImageStreamTag
+          name: {{scanner.name}}:${DOCKER_LABEL}
+          namespace: {{ oc_project_id }}
+      type: ImageChange
+
+### Route
+- apiVersion: v1
+  kind: Route
+  metadata:
+{% if oc_enable_ip_whitelisting %}
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: {{oc_ip_whitelist}}
+{% endif %}
+    name: {{scanner.name}}-${DOCKER_LABEL}
+    labels:
+      name: scb
+      stack: scanner
+      app: {{scanner.name}}
+      branch: ${DOCKER_LABEL}
+  spec:
+    host: {{scanner.name}}-${DOCKER_LABEL}-scb.{{ oc_route_base_url }}
+    port:
+      targetPort: 8080-tcp
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: {{scanner.name}}-${DOCKER_LABEL}
+      weight: 100
+    wildcardPolicy: None
+{% endfor %}
+
+parameters:
+  - name: DOCKER_REPOSITORY_URL
+    displayName: Docker Repository URL
+    description: The docker registry responsible for hosting the secureCodeBox images (e.g. dockerHub - default, artifactory, ...).
+    value: securecodebox
+    required: true
+  - name: DOCKER_LABEL
+    displayName: Container Tag/Version/Label
+    description: The container version describes the corresponding environment (e.g. develop, master, demo).
+    value: develop
+    required: true
+  - name: DOCKER_PULL
+    displayName: Pull Image Strategy
+    description: "Always: pull image before creating container. IfNotPresent: only once if not present."
+    value: Always
+    required: true
+  - name: REPLICA_COUNT
+    description: Number of replicas to run.
+    value: "2"
+    required: true
+message: "... Great! your secureCodeBox Project is active now ..."

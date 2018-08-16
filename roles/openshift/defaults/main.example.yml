@@ -1,0 +1,143 @@
+#
+# OpenShift Project Configuration
+#
+oc_project_id: secure-code-box
+oc_project_name: secureCodeBox
+oc_project_description: "Passion for IT Security - Continuous Security out-of-the-box."
+
+# You PATH to the oc CLI
+oc_path: ""
+oc_path_with_bin: "oc"
+# URL to your OpenShift Cluster Console
+oc_cluster_url: https://localhost:8443
+# Login credentials used for oc login
+oc_username: MY-USERNAME
+oc_token: MY-TOKEN
+
+# Define the base UTL used to suffix the Routes: e.g. localhost, my-cloud-host.com, ...
+oc_route_base_url: localhost
+
+#
+# External Docker Repository Configuration (to pull the seCureCodeBox Docker Images)
+#
+docker_registry_id: docker-registry
+# Remark: in the current implementation these values are no longer used!
+# Please configure a corresponding ~/files/.dockercfg with your registry credentials (dockerHub, artifactory...)
+# You must copy your local ~/.docker/config.json if you want (use "docker login" before...)
+#docker_registry_username:
+#docker_registry_password:
+#docker_registry_email:
+
+# Deletes the existing project (with the "oc_project_id") if 'true', otherwise 'false'
+development: false
+
+#
+# secureCodeBox specific Configuration
+#
+securecodebox_admin_id: admin
+securecodebox_admin_firstname: Joe
+securecodebox_admin_lastname: Admin
+securecodebox_admin_email: security@foobar.com
+securecodebox_admin_username: admin
+securecodebox_admin_password: S3cureC0deBox
+
+#
+# Project Members
+# Possible Roles: https://docs.openshift.org/latest/architecture/additional_concepts/authorization.html#roles
+#
+oc_project_members:
+  - name: foo_bar
+    role: admin
+  - name: max_musteran
+    role: edit
+
+#
+# IP-Whitelist
+# Block any Requests coming from other IP-Address Ranges
+#
+oc_enable_ip_whitelisting: false
+# Can be mutiple address ranges separeted by a space.
+# e.g. "12.34.56.78/24 98.76.54.32/8"
+oc_ip_whitelist: ""
+
+#
+# Persistence / Volume Configuration
+# Configuration to enable a fully persistent stack (engine & elasticsearch)
+#
+
+# if set to false no volume wil be specified or mounted to the pods
+# setting this to false will mean that all other persistence option will not have any effect
+oc_persistence_enabled: false
+
+# if set to false you have to specify the names of the pre existing volumes to use!
+# if set to true new volume claims will be created
+# More on prebinding: https://docs.openshift.org/latest/dev_guide/persistent_volumes.html#persistent-volumes-volumes-and-claim-prebinding
+oc_create_volumes: true
+oc_elasticsearch_master_volume_name: "" #example: pv007-node42
+oc_camunda_mysql_volume_name: "" #example: pv007-node42
+
+#
+# secureCodeBox Scanner
+# All scanner which included with the scanner stack
+#
+oc_scanner:
+  - name: nmap
+    replicas: 1
+    healthcheck:
+      path: /status
+      initialDelaySeconds: 30
+    resources:
+      limits:
+        memory: 512M
+      requests:
+        memory: 256M
+  - name: zap
+    replicas: 1
+    healthcheck:
+      path: /internal/health
+      initialDelaySeconds: 60
+    resources:
+      limits:
+        memory: 2048M
+      requests:
+        memory: 512M
+  - name: sslyze
+    replicas: 1
+    healthcheck:
+      path: /status
+      initialDelaySeconds: 30
+    resources:
+      limits:
+        memory: 512M
+      requests:
+        memory: 256M
+  - name: nikto
+    replicas: 1
+    healthcheck:
+      path: /status
+      initialDelaySeconds: 30
+    resources:
+      limits:
+        memory: 512M
+      requests:
+        memory: 256M
+  - name: arachni
+    replicas: 1
+    healthcheck:
+      path: /status
+      initialDelaySeconds: 30
+    resources:
+      limits:
+        memory: 2048M
+      requests:
+        memory: 512M
+  - name: amass
+    replicas: 1
+    healthcheck:
+      path: /status
+      initialDelaySeconds: 30
+    resources:
+      limits:
+        memory: 512M
+      requests:
+        memory: 256M

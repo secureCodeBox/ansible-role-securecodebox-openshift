@@ -1,0 +1,199 @@
+---
+- name: Login
+  shell: |
+    {{oc_path_with_bin}} login {{oc_cluster_url}} --token={{oc_token}}
+
+- name: Make sure cluster is up and oc status is running
+  shell: |
+    {{oc_path_with_bin}} status
+
+- name: delete project in development
+  shell: |
+    {{oc_path_with_bin}} delete project {{oc_project_id}} || true
+    sleep 5
+  when: development == true
+
+- name: Check if project "{{oc_project_id}}" exists
+  shell: |
+    {{oc_path_with_bin}} project {{oc_project_id}} || true
+  register: oc_project_output
+
+- name: Debug Project Output
+  debug:
+    msg: "Project {{ oc_project_output }} exits"
+
+- name: Create project "{{oc_project_id}}" if not exists
+  shell: |
+    {{oc_path_with_bin}} new-project {{oc_project_id}} --description="{{oc_project_description}}" --display-name="{{oc_project_name}}"
+  when: oc_project_output.stderr != ""
+  retries: 3
+  delay: 30
+  register: result
+  until: result.rc == 0
+
+- name: Make sure the Project is up and oc status is running
+  shell: |
+    {{oc_path_with_bin}} status
+  register: oc_status_output
+
+- name: Debug Status Output
+  debug:
+    msg: "Project Output: {{ oc_status_output }} exits"
+
+
+- name: Add Members to project
+  shell: |
+    oc adm policy add-role-to-user {{item.role}} {{item.name}}
+  loop: "{{ oc_project_members }}"
+
+
+#############################################################################################
+#                 Configure external trusted docker registry                                #
+#############################################################################################
+
+- name: Check if the secret for a external Docker Registry "{{docker_registry_id}}" exists
+  shell: |
+    {{oc_path_with_bin}} get secrets
+  register: oc_secret_output
+
+- name: Debug Secret Output
+  debug:
+    msg: "Secret Output: {{ oc_secret_output }}"
+
+- name: Create trusted external Docker Registry "{{docker_registry_id}}" if not exists
+  shell: |
+    {{oc_path_with_bin}} secrets new {{docker_registry_id}} .dockerconfigjson={{ playbook_dir }}/roles/openshift/files/.dockercfg
+  when: oc_secret_output.stdout.find(docker_registry_id) == -1
+
+#- name: Create trusted external Docker Registry "{{docker_registry_id}}" if not exists with oc secrets new-dockercfg {{docker_registry_id}}  --docker-server={{docker_registry_server}} --docker-username={{docker_registry_username}} --docker-password="{{docker_registry_password}}" --docker-email={{docker_registry_email}}
+#  shell: |
+#    {{oc_path_with_bin}} secrets new-dockercfg {{docker_registry_id}} --docker-server={{docker_registry_server}} --docker-username={{docker_registry_username}} --docker-password="{{docker_registry_password}}" --docker-email={{docker_registry_email}}
+#  when: oc_project_output.stderr != ""
+
+
+#############################################################################################
+#         Configure secret credential for the external docker registry                       #
+#############################################################################################
+
+- name: Check if the serviceaccount/default is linked to the secret {{docker_registry_id}}
+  shell: |
+    {{oc_path_with_bin}} describe serviceaccount/default
+  register: oc_serviceaccount_default_output
+
+- name: Debug serviceaccount/default Output
+  debug:
+    msg: "{{ oc_serviceaccount_default_output }}"
+
+- name: Apply trusted external Docker Registry to serviceaccount/default.
+  shell: |
+    {{oc_path_with_bin}} secrets link default secrets/{{docker_registry_id}}  --for=pull
+  when: oc_serviceaccount_default_output.stdout.find(docker_registry_id) == -1
+  retries: 10
+  delay: 20
+  register: result
+  until: result.rc == 0
+
+
+- name: Check if the serviceaccount/builder is linked to the secret {{docker_registry_id}}
+  shell: |
+      {{oc_path_with_bin}} describe serviceaccount/builder
+  register: oc_serviceaccount_builder_output
+
+- name: Debug serviceaccount/builder Output
+  debug:
+    msg: "{{ oc_serviceaccount_builder_output }}"
+
+- name: Apply trusted external Docker Registry to serviceaccount/builder.
+  shell: |
+    {{oc_path_with_bin}} secrets link builder secrets/{{ docker_registry_id }}
+  when: oc_serviceaccount_builder_output.stdout.find(docker_registry_id) == -1
+  retries: 10
+  delay: 10
+  register: result
+  until: result.rc == 0
+
+
+#############################################################################################
+#                  Configure and Deploy the secureCodeBox-Target                            #
+#############################################################################################
+
+- name: Check if the which templates are already existing
+  shell: |
+    {{oc_path_with_bin}} get templates
+  register: oc_servicetemplate_output
+
+
+# parse and create templates locally
+- name: Create secureCodeBox-Targets template in locally in filesystem folder tmp if not exits.
+  template:
+    src: oc_SCB_targets_template.yaml.j2
+    dest: /tmp/oc_SCB_targets_template.yaml
+  when: oc_servicetemplate_output.stdout.find("securecodebox-targets") == -1
+
+- name: Create secureCodeBox-Engine template in locally in filesystem folder tmp if not exits.
+  template:
+    src: oc_SCB_engine_template.yaml.j2
+    dest: /tmp/oc_SCB_engine_template.yaml
+  when: oc_servicetemplate_output.stdout.find("securecodebox-engine") == -1
+
+- name: Create secureCodeBox-Scanner template in locally in filesystem folder tmp if not exits.
+  template:
+    src: oc_SCB_scanner_template.yaml.j2
+    dest: /tmp/oc_SCB_scanner_template.yaml
+  when: oc_servicetemplate_output.stdout.find("securecodebox-scanner") == -1
+
+- name: Create secureCodeBox-Persistence template in locally in filesystem folder tmp if not exits.
+  template:
+    src: oc_SCB_persistence_template.yaml.j2
+    dest: /tmp/oc_SCB_persistence_template.yaml
+  when: oc_servicetemplate_output.stdout.find("securecodebox-persistence") == -1
+
+# Push templates to openshift
+- name: Create secureCodeBox-Targets template in openshift if not exits.
+  shell: |
+    {{oc_path_with_bin}} create -f /tmp/oc_SCB_targets_template.yaml
+  when: oc_servicetemplate_output.stdout.find("securecodebox-targets") == -1
+
+- name: Create secureCodeBox-Engine template in openshift if not exits.
+  shell: |
+    {{oc_path_with_bin}} create -f /tmp/oc_SCB_engine_template.yaml
+  when: oc_servicetemplate_output.stdout.find("securecodebox-engine") == -1
+
+- name: Create secureCodeBox-Scanner template in openshift if not exits.
+  shell: |
+    {{oc_path_with_bin}} create -f /tmp/oc_SCB_scanner_template.yaml
+  when: oc_servicetemplate_output.stdout.find("securecodebox-scanner") == -1
+
+- name: Create secureCodeBox-Persistence template in openshift if not exits.
+  shell: |
+    {{oc_path_with_bin}} create -f /tmp/oc_SCB_persistence_template.yaml
+  when: oc_servicetemplate_output.stdout.find("securecodebox-persistence") == -1
+
+
+
+- name: Check which PODs are already deployed
+  shell: |
+    {{oc_path_with_bin}} get pods
+  register: oc_pods_output
+
+
+
+- name: Procces secureCodeBox-Targets template to create a new deployment based on it.
+  shell: |
+    {{oc_path_with_bin}} process securecodebox-targets -p DOCKER_REPOSITORY_URL=securecodebox -p DOCKER_LABEL=develop | oc create -f -
+  when: oc_servicetemplate_output.stdout.find("securecodebox-targets") == -1
+
+- name: Procces secureCodeBox-Engine template to create a new deployment based on it.
+  shell: |
+    {{oc_path_with_bin}} process securecodebox-engine -p DOCKER_REPOSITORY_URL="securecodebox" -p DOCKER_LABEL=oss -p PERSISTENCE_PROVIDER="elasticsearch" -p ELASTIC_SEARCH_HOST="elasticsearch.{{oc_project_id}}.svc" -p ELASTIC_SEARCH_PORT="9200" | oc create -f -
+  when: oc_servicetemplate_output.stdout.find("securecodebox-engine") == -1
+
+- name: Procces secureCodeBox-Scanner template to create a new deployment based on it.
+  shell: |
+    {{oc_path_with_bin}} process securecodebox-scanner -p DOCKER_REPOSITORY_URL="securecodebox" -p DOCKER_LABEL=oss | oc create -f -
+  when: oc_servicetemplate_output.stdout.find("securecodebox-scanner") == -1
+
+- name: Procces secureCodeBox-Persistence template to create a new deployment based on it.
+  shell: |
+    {{oc_path_with_bin}} process securecodebox-persistence | oc create -f -
+  when: oc_servicetemplate_output.stdout.find("securecodebox-persistence") == -1
