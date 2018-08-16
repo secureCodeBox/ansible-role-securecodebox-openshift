@@ -342,6 +342,9 @@ objects:
   metadata:
     name: mysql
     namespace: {{ oc_project_id }}
+    labels:
+      name: scb
+      stack: engine
     annotations:
       template.openshift.io/expose-password: '{.data[''database-password'']}'
       template.openshift.io/expose-username: '{.data[''database-user'']}'
