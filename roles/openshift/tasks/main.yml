@@ -118,25 +118,17 @@
 #    Only applicable in prod mode. In dev the project is new and these objects dont exist   #
 #############################################################################################
 
-- name: Delete DeploymentConfigs
+- name: Delete Project Objects
   shell: |
-    {{oc_path_with_bin}} delete deploymentconfigs -l name=scb
+    {{oc_path_with_bin}} delete {{item}} -l name=scb
   when: development == false
-
-- name: Delete Templates
-  shell: |
-    {{oc_path_with_bin}} delete templates -l name=scb
-  when: development == false
-
-- name: Delete Routes
-  shell: |
-    {{oc_path_with_bin}} delete routes -l name=scb
-  when: development == false
-
-  - name: Delete Services
-  shell: |
-    {{oc_path_with_bin}} delete services -l name=scb
-  when: development == false
+  loop:
+    - deploymentconfigs
+    - imagestreams
+    - secrets
+    - routes
+    - services
+    - templates
 
 #############################################################################################
 #                  Configure and Deploy the secureCodeBox-Target                            #
