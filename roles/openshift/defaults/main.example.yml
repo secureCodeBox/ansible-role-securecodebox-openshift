@@ -18,7 +18,7 @@ oc_token: MY-TOKEN
 oc_route_base_url: localhost
 
 #
-# External Docker Repository Configuration (to pull the seCureCodeBox Docker Images)
+# External Docker Repository Configuration (to pull the secureCodeBox Docker Images)
 #
 docker_registry_id: docker-registry
 # Remark: in the current implementation these values are no longer used!
