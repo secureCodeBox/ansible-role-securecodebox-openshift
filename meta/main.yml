@@ -1,6 +1,6 @@
 galaxy_info:
   author: Robert Seedorff
-  description: your description
+  description: Role to deploy the secureCodeBox to an OpenShift environment
   company: iteratec GmbH
 
   # If the issue tracker for your role is not on github, uncomment the
@@ -44,7 +44,9 @@ galaxy_info:
   #   - 7
   #   - 99.99
 
-  galaxy_tags: []
+  galaxy_tags:
+    - secureCodeBox
+    - OpenShift
     # List tags for your role here, one per line. A tag is a keyword that describes
     # and categorizes the role. Users find roles by searching for tags. Be sure to
     # remove the '[]' above, if you add tags to this list.
