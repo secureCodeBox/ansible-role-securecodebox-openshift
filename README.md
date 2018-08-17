@@ -1,35 +1,38 @@
-# Quickstart
+Role Name
+=========
 
-## Requirements
+A brief description of the role goes here.
 
-- ansible 2.4
-- oc locally installed
+Requirements
+------------
 
-## Configure before you start
+Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
 
-Create `roles/openshift/defaults/main.yml` based on the `main.example.yml`.
-You should at least change these variables in the `main.yml`:
+Role Variables
+--------------
 
-```yml
-# URL to your OpenShift Cluster Console
-oc_cluster_url: https://localhost:8443
-# Login credentials
-oc_username: MY-USERNAME
-oc_token: MY-TOKEN
-```
+A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
 
-Create a `.dockercfg` in `roles/openshift/files/`.
-You can base the structure of the file based on the `.dockercfg.example`. This file should contain credentials to access the docker registries.
+Dependencies
+------------
 
-## How to run the ansible playbook
+A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
 
-Run in your CLI:
+Example Playbook
+----------------
 
-```sh
-$ ansible-playbook site.yml --connection=local
-```
+Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-## Links
+    - hosts: servers
+      roles:
+         - { role: username.rolename, x: 42 }
 
-https://blog.openshift.com/remotely-push-pull-container-images-openshift/
-http://v1.uncontained.io/playbooks/continuous_delivery/external-docker-registry-integration.html#accessing-secure-registrises
+License
+-------
+
+BSD
+
+Author Information
+------------------
+
+An optional section for the role authors to include contact information, or a website (HTML is not allowed).

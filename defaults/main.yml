@@ -1,3 +1,6 @@
+---
+# defaults file for ansible-role-securecodebox-openshift
+
 #
 # OpenShift Project Configuration
 #
@@ -24,9 +27,9 @@ docker_registry_id: docker-registry
 # Remark: in the current implementation these values are no longer used!
 # Please configure a corresponding ~/files/.dockercfg with your registry credentials (dockerHub, artifactory...)
 # You must copy your local ~/.docker/config.json if you want (use "docker login" before...)
-#docker_registry_username:
-#docker_registry_password:
-#docker_registry_email:
+# docker_registry_username:
+# docker_registry_password:
+# docker_registry_email:
 
 # Deletes the existing project (with the "oc_project_id") if 'true', otherwise 'false'
 development: false
@@ -48,7 +51,7 @@ securecodebox_admin_password: S3cureC0deBox
 oc_project_members:
   - name: foo_bar
     role: admin
-  - name: max_musteran
+  - name: max_musterman
     role: edit
 
 #

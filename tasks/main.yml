@@ -1,4 +1,6 @@
 ---
+# tasks file for ansible-role-securecodebox-openshift
+
 - name: Login
   shell: |
     {{oc_path_with_bin}} login {{oc_cluster_url}} --token={{oc_token}}
