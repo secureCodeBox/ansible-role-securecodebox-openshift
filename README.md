@@ -1,12 +1,12 @@
-Role Name
+Ansible secureCodeBox OpenWhift Role
 =========
 
-A brief description of the role goes here.
+An ansible role to deploy a secureCodeBox stack on a OpenShift environment.
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+A fully fletched OpenShift environment.
 
 Role Variables
 --------------
@@ -16,23 +16,71 @@ A description of the settable variables for this role should go here, including 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+None
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+```yml
+---
+- hosts: localhost ansible_connection=local
+  remote_user: root
+  roles:
+    - role: ansible-role-securecodebox-openshift
+      vars:
+        oc_project_id: secure-code-box
+        oc_project_name: secureCodeBox
+        oc_project_description: "Passion for IT Security - Continuous Security out-of-the-box."
+        # URL to your OpenShift Cluster Console
+        oc_cluster_url: https://localhost:8443
+        # Login credentials used for oc login
+        oc_username: MY-USERNAME
+        oc_token: MY-TOKEN
+        oc_route_base_url: localhost
+        # Deletes the existing project (with the "oc_project_id") if 'true', otherwise 'false'
+        development: false
+        #
+        # Project Members
+        # Possible Roles: https://docs.openshift.org/latest/architecture/additional_concepts/authorization.html#roles
+        #
+        oc_project_members:
+          - name: foo_bar
+            role: admin
+          - name: max_musterman
+            role: edit
+        #
+        # IP-Whitelist
+        # Block any Requests coming from other IP-Address Ranges
+        #
+        oc_enable_ip_whitelisting: false
+        # Can be mutiple address ranges separeted by a space.
+        # e.g. "12.34.56.78/24 98.76.54.32/8"
+        oc_ip_whitelist: ""
+        #
+        # Persistence / Volume Configuration
+        # Configuration to enable a fully persistent stack (engine & elasticsearch)
+        #
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+        # if set to false no volume wil be specified or mounted to the pods
+        # setting this to false will mean that all other persistence option will not have any effect
+        oc_persistence_enabled: false
+
+        # if set to false you have to specify the names of the pre existing volumes to use!
+        # if set to true new volume claims will be created
+        # More on prebinding: https://docs.openshift.org/latest/dev_guide/persistent_volumes.html#persistent-volumes-volumes-and-claim-prebinding
+        oc_create_volumes: true
+        oc_elasticsearch_master_volume_name: "" #example: pv007-node42
+        oc_camunda_mysql_volume_name: "" #example: pv007-node42
+```
 
 License
 -------
-
-BSD
+Apache-2.0
 
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+secureCodeBox - iteratec GmbH
+[secureCodeBox.io](https://www.securecodebox.io/)
+[iteratec.de](https://www.iteratec.de/)
+[secureCodeBox Github](https://github.com/secureCodeBox/secureCodeBox)
