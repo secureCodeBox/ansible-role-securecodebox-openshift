@@ -1,4 +1,4 @@
-Ansible secureCodeBox OpenWhift Role
+Ansible secureCodeBox OpenShift Role
 =========
 
 An ansible role to deploy a secureCodeBox stack on a OpenShift environment.
