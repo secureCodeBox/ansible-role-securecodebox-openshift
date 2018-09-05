@@ -156,7 +156,7 @@ objects:
             value: "BodgeIT on OpenShift"
           - name: SECURECODEBOX_DEFAULT_CONTEXT
             value: "Test-Project"
-          - name: JAVA_OPTS
+          - name: _JAVA_OPTIONS
             value: -Xms1g -Xmx2g
           name: engine-${DOCKER_LABEL}
           image: ${DOCKER_REPOSITORY_URL}/engine:develop
@@ -186,9 +186,9 @@ objects:
             timeoutSeconds: 2
           resources:
             limits:
-              memory: 2560Mi
+              memory: 3Gi
             requests:
-              memory: 1024Mi
+              memory: 1Gi
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         dnsPolicy: ClusterFirst
@@ -277,7 +277,7 @@ objects:
             timeoutSeconds: 1
           resources:
             limits:
-              memory: 512Mi
+              memory: 2Gi
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           volumeMounts:
