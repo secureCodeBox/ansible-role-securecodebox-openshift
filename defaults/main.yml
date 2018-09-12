@@ -74,12 +74,10 @@ oc_ip_whitelist: ""
 # setting this to false will mean that all other persistence option will not have any effect
 oc_persistence_enabled: false
 
-# if set to false you have to specify the names of the pre existing volumes to use!
+# if set to false and persistence is enabled, it is assumed that volumes with 
+# the names "camundadb-mysql" and "elasticsearch-master" do already exist
 # if set to true new volume claims will be created
-# More on prebinding: https://docs.openshift.org/latest/dev_guide/persistent_volumes.html#persistent-volumes-volumes-and-claim-prebinding
-oc_create_volumes: true
-oc_elasticsearch_master_volume_name: "" #example: pv007-node42
-oc_camunda_mysql_volume_name: "" #example: pv007-node42
+oc_create_volumes: false
 
 #
 # secureCodeBox Scanner

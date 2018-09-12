@@ -342,7 +342,7 @@ objects:
     annotations:
       template.openshift.io/expose-password: '{.data[''database-password'']}'
       template.openshift.io/expose-username: '{.data[''database-user'']}'
-{% if oc_persistence_enabled %}
+{% if oc_create_volumes == true %}
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
@@ -353,9 +353,6 @@ objects:
     resources:
       requests:
         storage: 2Gi
-{% if oc_create_volumes == false %}
-    volumeName: {{oc_camunda_mysql_volume_name}}
-{% endif %}
 {% endif %}
 parameters:
   - name: DOCKER_REPOSITORY_URL

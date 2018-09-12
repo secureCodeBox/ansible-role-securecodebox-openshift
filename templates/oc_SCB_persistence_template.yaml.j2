@@ -308,7 +308,7 @@ objects:
       name: kibana
       weight: 100
     wildcardPolicy: None
-{% if oc_persistence_enabled %}
+{% if oc_create_volumes == true %}
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
@@ -319,9 +319,6 @@ objects:
     resources:
       requests:
         storage: 4Gi
-{% if oc_create_volumes == false %}
-    volumeName: {{oc_elasticsearch_master_volume_name}}
-{% endif %}
 {% endif %}
 
 parameters:
