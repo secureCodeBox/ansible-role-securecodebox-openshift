@@ -69,13 +69,13 @@ objects:
       - from:
           kind: DockerImage
           name: ${DOCKER_REPOSITORY_URL}/engine:latest
-        name: Latest Stable Version
+        name: latest
         importPolicy:
           scheduled: true
       - from:
           kind: DockerImage
           name: ${DOCKER_REPOSITORY_URL}/engine:develop
-        name: Unstable
+        name: develop
         importPolicy:
           scheduled: true
 - apiVersion: v1

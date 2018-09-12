@@ -55,13 +55,13 @@ objects:
       - from:
           kind: DockerImage
           name: ${DOCKER_REPOSITORY_URL}/{{scanner.name}}:latest
-        name: Latest Stable Version
+        name: latest
         importPolicy:
           scheduled: true
       - from:
           kind: DockerImage
           name: ${DOCKER_REPOSITORY_URL}/{{scanner.name}}:develop
-        name: Unstable
+        name: develop
         importPolicy:
           scheduled: true
 
