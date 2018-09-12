@@ -16,7 +16,7 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: engine-${DOCKER_LABEL}
+    name: engine
     labels:
       name: scb
       stack: engine
@@ -29,7 +29,7 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
-      deploymentconfig: engine-${DOCKER_LABEL}
+      deploymentconfig: engine
     sessionAffinity: None
     type: ClusterIP
 - apiVersion: v1
@@ -81,7 +81,7 @@ objects:
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    name: engine-${DOCKER_LABEL}
+    name: engine
     labels:
       name: scb
       stack: engine
@@ -91,7 +91,7 @@ objects:
     replicas: 1
     selector:
       app: engine
-      deploymentconfig: engine-${DOCKER_LABEL}
+      deploymentconfig: engine
     strategy:
       activeDeadlineSeconds: 21600
       resources: {}
@@ -106,7 +106,7 @@ objects:
       metadata:
         labels:
           app: engine
-          deploymentconfig: engine-${DOCKER_LABEL}
+          deploymentconfig: engine
       spec:
         containers:
         - env:
@@ -150,7 +150,7 @@ objects:
             value: "Test-Project"
           - name: _JAVA_OPTIONS
             value: -Xms1g -Xmx2g
-          name: engine-${DOCKER_LABEL}
+          name: engine
           image: ${DOCKER_REPOSITORY_URL}/engine:develop
           imagePullPolicy: ${DOCKER_PULL}
           ports:
@@ -194,7 +194,7 @@ objects:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - engine-${DOCKER_LABEL}
+        - engine
         from:
           kind: ImageStreamTag
           name: engine:${DOCKER_LABEL}
@@ -309,14 +309,14 @@ objects:
     annotations:
       haproxy.router.openshift.io/ip_whitelist: {{oc_ip_whitelist}}
 {% endif %}
-    name: engine-${DOCKER_LABEL}
+    name: engine
     labels:
       name: scb
       stack: engine
       app: engine
       branch: ${DOCKER_LABEL}
   spec:
-    host: engine-${DOCKER_LABEL}-scb.{{ oc_route_base_url }}
+    host: engine-scb.{{ oc_route_base_url }}
     port:
       targetPort: 8080-tcp
     tls:
@@ -324,7 +324,7 @@ objects:
       termination: edge
     to:
       kind: Service
-      name: engine-${DOCKER_LABEL}
+      name: engine
       weight: 100
     wildcardPolicy: None
 - apiVersion: v1

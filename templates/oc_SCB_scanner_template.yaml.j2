@@ -18,7 +18,7 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: {{scanner.name}}-${DOCKER_LABEL}
+    name: {{scanner.name}}
     labels:
       name: scb
       stack: scanner
@@ -31,7 +31,7 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
-      deploymentconfig: {{scanner.name}}-${DOCKER_LABEL}
+      deploymentconfig: {{scanner.name}}
     sessionAffinity: None
     type: ClusterIP
 
@@ -69,7 +69,7 @@ objects:
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    name: {{scanner.name}}-${DOCKER_LABEL}
+    name: {{scanner.name}}
     labels:
       name: scb
       stack: scanner
@@ -79,7 +79,7 @@ objects:
     replicas: {{scanner.replicas}}
     selector:
       app: {{scanner.name}}
-      deploymentconfig: {{scanner.name}}-${DOCKER_LABEL}
+      deploymentconfig: {{scanner.name}}
     strategy:
       activeDeadlineSeconds: 21600
       resources: {}
@@ -94,7 +94,7 @@ objects:
       metadata:
         labels:
           app: {{scanner.name}}
-          deploymentconfig: {{scanner.name}}-${DOCKER_LABEL}
+          deploymentconfig: {{scanner.name}}
       spec:
         containers:
         - env:
@@ -103,8 +103,8 @@ objects:
           - name: SERVICE_TAGS
             value: webapp,www,test,ui,target,loadbalanced,sso
           - name: ENGINE_ADDRESS
-            value: http://engine-${DOCKER_LABEL}.{{ oc_project_id }}.svc:8080
-          name: {{scanner.name}}-${DOCKER_LABEL}
+            value: http://engine.{{ oc_project_id }}.svc:8080
+          name: {{scanner.name}}
           image: ${DOCKER_REPOSITORY_URL}/{{scanner.name}}:develop
           imagePullPolicy: ${DOCKER_PULL}
           ports:
@@ -148,7 +148,7 @@ objects:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - {{scanner.name}}-${DOCKER_LABEL}
+        - {{scanner.name}}
         from:
           kind: ImageStreamTag
           name: {{scanner.name}}:${DOCKER_LABEL}
@@ -163,14 +163,14 @@ objects:
     annotations:
       haproxy.router.openshift.io/ip_whitelist: {{oc_ip_whitelist}}
 {% endif %}
-    name: {{scanner.name}}-${DOCKER_LABEL}
+    name: {{scanner.name}}
     labels:
       name: scb
       stack: scanner
       app: {{scanner.name}}
       branch: ${DOCKER_LABEL}
   spec:
-    host: {{scanner.name}}-${DOCKER_LABEL}-scb.{{ oc_route_base_url }}
+    host: {{scanner.name}}-scb.{{ oc_route_base_url }}
     port:
       targetPort: 8080-tcp
     tls:
@@ -178,7 +178,7 @@ objects:
       termination: edge
     to:
       kind: Service
-      name: {{scanner.name}}-${DOCKER_LABEL}
+      name: {{scanner.name}}
       weight: 100
     wildcardPolicy: None
 {% endfor %}
