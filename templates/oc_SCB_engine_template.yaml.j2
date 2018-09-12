@@ -64,26 +64,18 @@ objects:
       tags:
       - from:
           kind: DockerImage
-          name: ${DOCKER_REPOSITORY_URL}/engine:latest
-        name: latest
-        importPolicy:
-          scheduled: true
+          name: ${DOCKER_REPOSITORY_URL}/engine:{{securecodebox_version}}
+        name: {{securecodebox_version}}
       - from:
           kind: DockerImage
-          name: ${DOCKER_REPOSITORY_URL}/engine:oss
-        name: oss
+          name: ${DOCKER_REPOSITORY_URL}/engine:latest
+        name: Latest Stable Version
         importPolicy:
           scheduled: true
       - from:
           kind: DockerImage
           name: ${DOCKER_REPOSITORY_URL}/engine:develop
-        name: develop
-        importPolicy:
-          scheduled: true
-      - from:
-          kind: DockerImage
-          name: ${DOCKER_REPOSITORY_URL}/engine:master
-        name: master
+        name: Unstable
         importPolicy:
           scheduled: true
 - apiVersion: v1

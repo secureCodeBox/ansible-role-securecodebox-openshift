@@ -20,6 +20,8 @@ oc_token: MY-TOKEN
 # Define the base UTL used to suffix the Routes: e.g. localhost, my-cloud-host.com, ...
 oc_route_base_url: localhost
 
+securecodebox_version: v0.9.0
+
 #
 # External Docker Repository Configuration (to pull the secureCodeBox Docker Images)
 #
