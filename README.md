@@ -21,10 +21,15 @@ None
 Example Playbook
 ----------------
 
+Note additionally to the following configuration you'll need to store some confidential values securely between deployments. (e.g. The password to the camunda database). We recommend storing these in encrypted form via ansible vault. These can then be imported using the include vars syntax.
+
 ```yml
 ---
 - hosts: localhost ansible_connection=local
   remote_user: root
+  pre_tasks:
+  - name: secret config
+    include_vars: secrets.yml
   roles:
     - role: ansible-role-securecodebox-openshift
       vars:
