@@ -170,7 +170,7 @@ objects:
       app: {{scanner.name}}
       branch: ${DOCKER_LABEL}
   spec:
-    host: {{scanner.name}}-scb.{{ oc_route_base_url }}
+    host: {{scanner.name}}{{ oc_route_base_url }}
     port:
       targetPort: 8080-tcp
     tls:

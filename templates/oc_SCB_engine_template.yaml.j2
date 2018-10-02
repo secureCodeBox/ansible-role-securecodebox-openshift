@@ -316,7 +316,7 @@ objects:
       app: engine
       branch: ${DOCKER_LABEL}
   spec:
-    host: engine-scb.{{ oc_route_base_url }}
+    host: engine{{ oc_route_base_url }}
     port:
       targetPort: 8080-tcp
     tls:

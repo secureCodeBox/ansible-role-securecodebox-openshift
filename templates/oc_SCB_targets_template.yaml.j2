@@ -283,7 +283,7 @@ objects:
       app: bodgeit
       branch: ${DOCKER_LABEL}
   spec:
-    host: bodgeit-scb.{{ oc_route_base_url }}
+    host: bodgeit{{ oc_route_base_url }}
     port:
       targetPort: 8080-tcp
     tls:
@@ -308,7 +308,7 @@ objects:
       app: juice-shop
       branch: ${DOCKER_LABEL}
   spec:
-    host: juice-shop-scb.{{ oc_route_base_url }}
+    host: juice-shop{{ oc_route_base_url }}
     port:
       targetPort: 3000-tcp
     tls:

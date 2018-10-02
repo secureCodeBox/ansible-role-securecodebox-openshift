@@ -273,7 +273,7 @@ objects:
       stack: persistence
       app: elasticsearch
   spec:
-    host: elasticsearch-scb.{{ oc_route_base_url }}
+    host: elasticsearch{{ oc_route_base_url }}
     port:
       targetPort: 9200-tcp
     tls:
@@ -297,7 +297,7 @@ objects:
       stack: persistence
       app: kibana
   spec:
-    host: kibana-scb.{{ oc_route_base_url }}
+    host: kibana{{ oc_route_base_url }}
     port:
       targetPort: 5601-tcp
     tls:

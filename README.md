@@ -41,7 +41,10 @@ Note additionally to the following configuration you'll need to store some confi
         # Login credentials used for oc login
         oc_username: MY-USERNAME
         oc_token: MY-TOKEN
-        oc_route_base_url: localhost
+
+        # This will create routes like engine.foobar.com
+        oc_route_base_url: .foobar.com
+
         # Deletes the existing project (with the "oc_project_id") if 'true', otherwise 'false'
         development: false
         #
