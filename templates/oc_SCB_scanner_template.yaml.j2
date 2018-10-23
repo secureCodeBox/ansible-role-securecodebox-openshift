@@ -104,6 +104,16 @@ objects:
             value: webapp,www,test,ui,target,loadbalanced,sso
           - name: ENGINE_ADDRESS
             value: http://engine.{{ oc_project_id }}.svc:8080
+          - name: ENGINE_BASIC_AUTH_USER
+            valueFrom:
+              secretKeyRef:
+                key: scanner-user
+                name: scannerservices
+          - name: ENGINE_BASIC_AUTH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: scanner-password
+                name: scannerservices
           name: {{scanner.name}}
           image: ${DOCKER_REPOSITORY_URL}/{{scanner.name}}:develop
           imagePullPolicy: ${DOCKER_PULL}

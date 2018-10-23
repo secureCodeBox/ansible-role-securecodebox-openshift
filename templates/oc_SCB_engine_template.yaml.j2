@@ -239,6 +239,16 @@ objects:
                 name: mysql
           - name: MYSQL_DATABASE
             value: camundadb
+          - name: SECURECODEBOX_USER_SCANNER
+            valueFrom:
+              secretKeyRef:
+                key: scanner-user
+                name: scannerservices
+          - name: SECURECODEBOX_USER_SCANNER_PW
+            valueFrom:
+              secretKeyRef:
+                key: scanner-password
+                name: scannerservices
           name: mysql
           image: openshift/mysql:5.7
           imagePullPolicy: ${DOCKER_PULL}
@@ -340,8 +350,23 @@ objects:
       name: scb
       stack: engine
     annotations:
-      template.openshift.io/expose-password: '{.data[''database-password'']}'
       template.openshift.io/expose-username: '{.data[''database-user'']}'
+      template.openshift.io/expose-password: '{.data[''database-password'']}'
+- apiVersion: v1
+  kind: Secret
+  type: Opaque 
+  stringData: 
+    scanner-user: ${SCANNERSERVICES_USER}
+    scanner-password: ${SCANNERSERVICES_PASSWORD}
+  metadata:
+    name: scannerservices
+    namespace: {{ oc_project_id }}
+    labels:
+      name: scb
+      stack: engine
+    annotations:
+      template.openshift.io/expose-username: '{.data[''scanner-user'']}'
+      template.openshift.io/expose-password: '{.data[''scanner-password'']}'
 {% if oc_create_volumes == true %}
 - apiVersion: v1
   kind: PersistentVolumeClaim
@@ -392,6 +417,14 @@ parameters:
     required: true
   - name: MYSQL_PASSWORD
     description: Password for the MySQL user
+    generate: expression 
+    from: "[a-zA-Z0-9]{40}"
+  - name: SCANNERSERVICES_USER
+    description: Username for the Technical User Used by the scanner services to access the engine api
+    value: "scanner-user"
+    required: true
+  - name: SCANNERSERVICES_PASSWORD
+    description: Username for the Technical User Used by the scanner services to access the engine api
     generate: expression 
     from: "[a-zA-Z0-9]{40}"
   
