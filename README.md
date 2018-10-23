@@ -83,8 +83,8 @@ Example (decrypted) `secret.yml`
 
 ```yml
 mysql_password: eQZfqKybEgLwKkrisFs]WgmMFe6%dEw{qKEAG2tLCR89tG3G
-scanner-user: scanner-technical-user
-scanner-password: CDaFqCjWokwkeFwhMdi7HEe7sTv3cLTB.w{n9L7hNNkHWZ;V
+scanner_user: scanner-technical-user
+scanner_password: CDaFqCjWokwkeFwhMdi7HEe7sTv3cLTB.w{n9L7hNNkHWZ;V
 ```
 
 License
