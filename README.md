@@ -86,8 +86,10 @@ mysql_password: eQZfqKybEgLwKkrisFs]WgmMFe6%dEw{qKEAG2tLCR89tG3G
 scanner-user: scanner-technical-user
 scanner-password: CDaFqCjWokwkeFwhMdi7HEe7sTv3cLTB.w{n9L7hNNkHWZ;V
 ```
+
 License
 -------
+
 Apache-2.0
 
 Author Information
