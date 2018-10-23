@@ -71,14 +71,12 @@ Note additionally to the following configuration you'll need to store some confi
 
         # if set to false no volume wil be specified or mounted to the pods
         # setting this to false will mean that all other persistence option will not have any effect
-        oc_persistence_enabled: false
+        oc_persistence_enabled: true
 
         # if set to false you have to specify the names of the pre existing volumes to use!
         # if set to true new volume claims will be created
         # More on prebinding: https://docs.openshift.org/latest/dev_guide/persistent_volumes.html#persistent-volumes-volumes-and-claim-prebinding
         oc_create_volumes: true
-        oc_elasticsearch_master_volume_name: "" #example: pv007-node42
-        oc_camunda_mysql_volume_name: "" #example: pv007-node42
 ```
 
 Example (decrypted) `secret.yml`
