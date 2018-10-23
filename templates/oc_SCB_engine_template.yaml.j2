@@ -148,6 +148,16 @@ objects:
             value: "BodgeIT on OpenShift"
           - name: SECURECODEBOX_DEFAULT_CONTEXT
             value: "Test-Project"
+          - name: SECURECODEBOX_USER_SCANNER
+            valueFrom:
+              secretKeyRef:
+                key: scanner-user
+                name: scannerservices
+          - name: SECURECODEBOX_USER_SCANNER_PW
+            valueFrom:
+              secretKeyRef:
+                key: scanner-password
+                name: scannerservices
           - name: _JAVA_OPTIONS
             value: -Xms1g -Xmx2g
           name: engine
@@ -239,16 +249,6 @@ objects:
                 name: mysql
           - name: MYSQL_DATABASE
             value: camundadb
-          - name: SECURECODEBOX_USER_SCANNER
-            valueFrom:
-              secretKeyRef:
-                key: scanner-user
-                name: scannerservices
-          - name: SECURECODEBOX_USER_SCANNER_PW
-            valueFrom:
-              secretKeyRef:
-                key: scanner-password
-                name: scannerservices
           name: mysql
           image: openshift/mysql:5.7
           imagePullPolicy: ${DOCKER_PULL}
