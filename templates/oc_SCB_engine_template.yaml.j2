@@ -130,8 +130,8 @@ objects:
               secretKeyRef:
                 key: database-password
                 name: mysql
-          - name: SECURECODEBOX_PERSISTENCE_PROVIDER
-            value: ${PERSISTENCE_PROVIDER}
+          - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_ENABLED
+            value: "true"
           - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_HOST
             value: ${ELASTIC_SEARCH_HOST}
           - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_PORT
