@@ -130,6 +130,7 @@ objects:
               secretKeyRef:
                 key: database-password
                 name: mysql
+{% if oc_enable_elasticsearch_persistence_provider %}
           - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_ENABLED
             value: "true"
           - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_HOST
@@ -140,6 +141,7 @@ objects:
             value: securecodebox
           - name: SECURECODEBOX_PERSISTENCE_ELASTICSEARCH_INDEX_DELETE_ON_INIT
             value: "false"
+{% endif %}
           - name: SECURECODEBOX_DEFAULT_TARGET_URI
             value: "http://bodgeit.{{ oc_project_id }}.svc:8080/bodgeit"
           - name: SECURECODEBOX_DEFAULT_TARGET_LOCATION
