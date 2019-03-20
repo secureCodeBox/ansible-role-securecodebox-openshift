@@ -62,8 +62,8 @@ objects:
       tags:
       - from:
           kind: DockerImage
-          name: docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.2
-        name: 6.3.2
+          name: docker.elastic.co/elasticsearch/elasticsearch-oss:6.6.1
+        name: 6.6.1
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -77,8 +77,8 @@ objects:
       tags:
       - from:
           kind: DockerImage
-          name: docker.elastic.co/kibana/kibana-oss:6.3.2
-        name: 6.3.2
+          name: docker.elastic.co/kibana/kibana-oss:6.6.1
+        name: 6.6.1
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
@@ -115,7 +115,7 @@ objects:
           - name: SERVICE_TAGS
             value: webapp,www,test,ui,target,loadbalanced,sso
           name: elasticsearch
-          image: elasticsearch/elasticsearch-oss:6.3.2
+          image: elasticsearch/elasticsearch-oss:6.6.1
           imagePullPolicy: ${DOCKER_PULL}
           ports:
           - containerPort: 9200
@@ -172,7 +172,7 @@ objects:
         - elasticsearch
         from:
           kind: ImageStreamTag
-          name: elasticsearch:6.3.2
+          name: elasticsearch:6.6.1
           namespace: {{ oc_project_id }}
       type: ImageChange
 - apiVersion: v1
@@ -211,7 +211,7 @@ objects:
           - name: SERVICE_TAGS
             value: webapp,www,test,ui,target,loadbalanced,sso
           name: kibana
-          image: kibana/kibana-oss:6.3.2
+          image: kibana/kibana-oss:6.6.1
           imagePullPolicy: ${DOCKER_PULL}
           ports:
           - containerPort: 5601
@@ -257,7 +257,7 @@ objects:
         - kibana
         from:
           kind: ImageStreamTag
-          name: kibana:6.3.2
+          name: kibana:6.6.1
           namespace: {{ oc_project_id }}
       type: ImageChange
 - apiVersion: v1
