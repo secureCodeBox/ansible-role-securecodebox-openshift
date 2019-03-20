@@ -22,7 +22,7 @@
 
 - name: Debug Project Output
   debug:
-    msg: "Project {{ oc_project_output }} exits"
+    msg: 'Project {{ oc_project_output }} exits'
 
 - name: Create project "{{oc_project_id}}" if not exists
   shell: |
@@ -40,13 +40,12 @@
 
 - name: Debug Status Output
   debug:
-    msg: "Project Output: {{ oc_status_output }} exits"
-
+    msg: 'Project Output: {{ oc_status_output }} exits'
 
 - name: Add Members to project
   shell: |
     {{oc_path_with_bin}} adm policy add-role-to-user {{item.role}} {{item.name}}
-  loop: "{{ oc_project_members }}"
+  loop: '{{ oc_project_members }}'
 
 #############################################################################################
 #                  Delte Pods and templates to replace them later                           #
@@ -73,7 +72,6 @@
   shell: |
     {{oc_path_with_bin}} get templates
   register: oc_servicetemplate_output
-
 
 # parse and create templates locally
 - name: Create secureCodeBox-Targets template in locally in filesystem folder tmp if not exits.
@@ -121,23 +119,19 @@
     {{oc_path_with_bin}} create -f /tmp/oc_SCB_persistence_template.yaml
   when: oc_servicetemplate_output.stdout.find("securecodebox-persistence") == -1
 
-
-
 - name: Check which PODs are already deployed
   shell: |
     {{oc_path_with_bin}} get pods
   register: oc_pods_output
 
-
-
 - name: Procces secureCodeBox-Targets template to create a new deployment based on it.
   shell: |
-    {{oc_path_with_bin}} process securecodebox-targets -p DOCKER_REPOSITORY_URL=securecodebox -p DOCKER_LABEL=develop | {{oc_path_with_bin}} create -f -
+    {{oc_path_with_bin}} process securecodebox-targets -p DOCKER_REPOSITORY_URL=securecodebox -p DOCKER_LABEL={{securecodebox_version}} | {{oc_path_with_bin}} create -f -
   when: oc_servicetemplate_output.stdout.find("securecodebox-targets") == -1
 
 - name: Procces secureCodeBox-Engine template to create a new deployment based on it.
   shell: |
-    {{oc_path_with_bin}} process securecodebox-engine -p DOCKER_REPOSITORY_URL="securecodebox" -p DOCKER_LABEL={{securecodebox_version}} -p PERSISTENCE_PROVIDER="elasticsearch" -p ELASTIC_SEARCH_HOST="elasticsearch.{{oc_project_id}}.svc" -p ELASTIC_SEARCH_PORT="9200" -p MYSQL_PASSWORD="{{mysql_password}}" -p SCANNERSERVICES_USER="{{scanner_user}}" -p SCANNERSERVICES_PASSWORD="{{scanner_password}}" | {{oc_path_with_bin}} create -f -
+    {{oc_path_with_bin}} process securecodebox-engine -p DOCKER_REPOSITORY_URL="securecodebox" -p DOCKER_LABEL={{securecodebox_version}} -p ELASTIC_SEARCH_HOST="elasticsearch.{{oc_project_id}}.svc" -p ELASTIC_SEARCH_PORT="9200" -p MYSQL_PASSWORD="{{mysql_password}}" -p SCANNERSERVICES_USER="{{scanner_user}}" -p SCANNERSERVICES_PASSWORD="{{scanner_password}}" | {{oc_path_with_bin}} create -f -
   when: oc_servicetemplate_output.stdout.find("securecodebox-engine") == -1
 
 - name: Procces secureCodeBox-Scanner template to create a new deployment based on it.

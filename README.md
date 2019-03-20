@@ -1,25 +1,20 @@
-Ansible secureCodeBox OpenShift Role
-=========
+# Ansible secureCodeBox OpenShift Role
 
 An ansible role to deploy a secureCodeBox stack on a OpenShift environment.
 
-Requirements
-------------
+## Requirements
 
 A fully fletched OpenShift environment.
 
-Role Variables
---------------
+## Role Variables
 
 A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
 
-Dependencies
-------------
+## Dependencies
 
 None
 
-Example Playbook
-----------------
+## Example Playbook
 
 Note additionally to the following configuration you'll need to store some confidential values securely between deployments. (e.g. The password to the camunda database). We recommend storing these in encrypted form via ansible vault. These can then be imported using the include vars syntax.
 
@@ -28,14 +23,14 @@ Note additionally to the following configuration you'll need to store some confi
 - hosts: localhost ansible_connection=local
   remote_user: root
   pre_tasks:
-  - name: secret config
-    include_vars: secrets.yml
+    - name: secret config
+      include_vars: secrets.yml
   roles:
     - role: ansible-role-securecodebox-openshift
       vars:
         oc_project_id: secure-code-box
         oc_project_name: secureCodeBox
-        oc_project_description: "Passion for IT Security - Continuous Security out-of-the-box."
+        oc_project_description: 'Passion for IT Security - Continuous Security out-of-the-box.'
         # URL to your OpenShift Cluster Console
         oc_cluster_url: https://localhost:8443
         # Login credentials used for oc login
@@ -63,7 +58,7 @@ Note additionally to the following configuration you'll need to store some confi
         oc_enable_ip_whitelisting: false
         # Can be mutiple address ranges separeted by a space.
         # e.g. "12.34.56.78/24 98.76.54.32/8"
-        oc_ip_whitelist: ""
+        oc_ip_whitelist: ''
         #
         # Persistence / Volume Configuration
         # Configuration to enable a fully persistent stack (engine & elasticsearch)
@@ -83,17 +78,15 @@ Example (decrypted) `secret.yml`
 
 ```yml
 mysql_password: eQZfqKybEgLwKkrisFs]WgmMFe6%dEw{qKEAG2tLCR89tG3G
-scanner_user: scanner-technical-user
+scanner_user: scannerTechnicalUser
 scanner_password: CDaFqCjWokwkeFwhMdi7HEe7sTv3cLTB.w{n9L7hNNkHWZ;V
 ```
 
-License
--------
+## License
 
 Apache-2.0
 
-Author Information
-------------------
+## Author Information
 
 secureCodeBox - iteratec GmbH
 [secureCodeBox.io](https://www.securecodebox.io/)
