@@ -1,3 +1,6 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![GitHub release](https://img.shields.io/github/release/secureCodeBox/ansible-role-securecodebox-openshift.svg)](https://github.com/secureCodeBox/ansible-role-securecodebox-openshift/releases/latest)
+
 # Ansible secureCodeBox OpenShift Role
 
 An ansible role to deploy a secureCodeBox stack on a OpenShift environment.
